@@ -233,8 +233,9 @@ Expected behavior:
 ## Google Colab Quick Start (Recommended)
 
 Train without installing anything locally. The included notebook runs the whole pipeline
-(dataset → LoRA fine-tune → merge → GGUF) on Colab's free T4 GPU. No Google Drive is required —
-all artifacts are produced in the Colab VM and downloaded in one zip at the end.
+(dataset → LoRA fine-tune → merge → GGUF) on Colab's free T4 GPU. All artifacts are produced in
+the Colab VM and saved to the final download zip. Mounting Google Drive (optional, cell 2) also
+mirrors the model and zip to `MyDrive/tmc-llm/` so they survive VM resets.
 
 ### 1. Push the repo to GitHub
 
@@ -249,19 +250,24 @@ git add -A && git commit -m "Add Colab support" && git push
 
 ### 3. Run everything
 
-- Click **Run all**. No Google account/Drive authorization is needed.
+- Click **Run all**. Cell 2 optionally mounts Google Drive (recommended) so the trained model
+  and zip are saved to `MyDrive/tmc-llm/` and survive VM resets; if it fails, training still
+  runs in the VM and you download from `/content/` instead.
 - Add any extra source documents to `data/raw/tmc_sources/` in the cloned repo
-  (`/content/tmc-llm`) before the dataset step if you want to train on more than `train.txt`.
+  (`/content/tmc-llm`) before the dataset step if you want to train on more than the shipped sources.
 - Artifacts are written to the VM at `/content/tmc-llm-artifacts/` (`models/adapters`,
   `models/merged`, `models/gguf`) plus a Hugging Face cache in `.hf-cache/`.
 - Typical free-T4 runtime: ~20–40 minutes (model download, training, merge, GGUF build).
-- The last cell zips the GGUF + adapter to `/content/tmc-llm-download.zip`.
+- The last cell verifies the GGUF + adapter actually exist (no more empty downloads), then zips
+  to `/content/tmc-llm-download.zip` and, when Drive is mounted, copies it to
+  `MyDrive/tmc-llm/`.
 
 ### 4. Use the model locally (Ollama)
 
 1. In Colab, open the file browser (folder icon) → navigate to `/content/` → right-click
    **`tmc-llm-download.zip`** → **Download** (or download just
-   `/content/tmc-llm-artifacts/models/gguf/tmc-lm-tinyllama-q4_k_m.gguf`).
+   `/content/tmc-llm-artifacts/models/gguf/tmc-lm-tinyllama-q4_k_m.gguf`). If Drive is mounted,
+   grab the same files from `MyDrive/tmc-llm/` instead.
 2. Extract the zip and place the GGUF in `models/gguf/`, then import it into Ollama:
 
 ```powershell
@@ -269,8 +275,11 @@ git add -A && git commit -m "Add Colab support" && git push
 ollama run tmc-lm
 ```
 
-> Free Colab sessions are wiped after disconnecting. Download the zip before closing the
-> notebook — the next session re-clones the repo and re-trains from scratch.
+> Free Colab sessions are wiped after disconnecting. With Drive mounted the model is saved to
+> `MyDrive/tmc-llm/` so nothing is lost; otherwise download the zip before closing the notebook —
+> the next session re-clones the repo and re-trains from scratch. If your downloaded zip is empty
+> (~200 bytes), the VM was reset and only the final cells were re-run — re-run the full notebook
+> (`Runtime → Restart and run all`), which the packaging cell now detects and refuses to zip.
 
 > The `scripts/*.sh` files (`prepare_dataset.sh`, `train_lora.sh`, `merge_lora.sh`,
 > `convert_to_gguf.sh`) are the Linux/Colab equivalents of the `.ps1` scripts and are what
