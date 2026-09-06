@@ -244,7 +244,7 @@ git add -A && git commit -m "Add Colab support" && git push
 
 ### 2. Open the notebook in Colab
 
-- Go to https://colab.research.google.com → **File → Open notebook → GitHub** → `McEmil1993/tmc-llm` → open `notebooks/tmc_llm_colab.ipynb`
+- Go to https://colab.research.google.com → **File → Open notebook → GitHub** → `jbasilad/tmc-llm` → open `notebooks/tmc_llm_colab.ipynb`
 - **Runtime → Change runtime type → Hardware accelerator = T4 GPU** → Save
 
 ### 3. Run everything
