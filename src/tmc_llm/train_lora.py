@@ -57,9 +57,12 @@ def tokenize_dataset(tokenizer: AutoTokenizer, rows: list[dict], max_length: int
             batch["text"],
             truncation=True,
             max_length=max_length,
-            padding=False,
+            padding="max_length",
         )
-        tokenized["labels"] = tokenized["input_ids"].copy()
+        labels = []
+        for input_ids, attention in zip(tokenized["input_ids"], tokenized["attention_mask"]):
+            labels.append([token_id if mask else -100 for token_id, mask in zip(input_ids, attention)])
+        tokenized["labels"] = labels
         return tokenized
 
     return dataset.map(tokenize, batched=True, remove_columns=["text"])
