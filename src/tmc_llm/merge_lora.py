@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+def ensure_valid_config(model, output_dir: Path) -> None:
+    ConfigClass = getattr(model, "config", None)
+    if ConfigClass is None:
+        return
+    cfg = json.loads(ConfigClass.to_json_string())
+    cfg.setdefault("model_type", "llama")
+    (output_dir / "config.json").write_text(
+        json.dumps(cfg, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
 
 
 def merge_lora(base_model: str, adapter_dir: Path, output_dir: Path) -> None:
@@ -19,6 +32,8 @@ def merge_lora(base_model: str, adapter_dir: Path, output_dir: Path) -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(adapter_dir)
     tokenizer.save_pretrained(output_dir)
+
+    ensure_valid_config(merged, output_dir)
 
 
 def parse_args() -> argparse.Namespace:
