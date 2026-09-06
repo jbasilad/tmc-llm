@@ -233,8 +233,8 @@ Expected behavior:
 ## Google Colab Quick Start (Recommended)
 
 Train without installing anything locally. The included notebook runs the whole pipeline
-(dataset → LoRA fine-tune → merge → GGUF) on Colab's free T4 GPU and saves every artifact
-to your Google Drive.
+(dataset → LoRA fine-tune → merge → GGUF) on Colab's free T4 GPU. No Google Drive is required —
+all artifacts are produced in the Colab VM and downloaded in one zip at the end.
 
 ### 1. Push the repo to GitHub
 
@@ -249,23 +249,28 @@ git add -A && git commit -m "Add Colab support" && git push
 
 ### 3. Run everything
 
-- Click **Run all**. On the first run, allow the Google Drive access popup when prompted.
-- The notebook mounts `MyDrive/tmc-llm/` and persists:
-  - `.hf-cache/` — Hugging Face model cache (no re-download between sessions)
-  - `data/raw/tmc_sources/` — place new source documents here for future training runs
-  - `models/adapters/`, `models/merged/`, `models/gguf/` — training outputs
+- Click **Run all**. No Google account/Drive authorization is needed.
+- Add any extra source documents to `data/raw/tmc_sources/` in the cloned repo
+  (`/content/tmc-llm`) before the dataset step if you want to train on more than `train.txt`.
+- Artifacts are written to the VM at `/content/tmc-llm-artifacts/` (`models/adapters`,
+  `models/merged`, `models/gguf`) plus a Hugging Face cache in `.hf-cache/`.
 - Typical free-T4 runtime: ~20–40 minutes (model download, training, merge, GGUF build).
-- If the session disconnects, reopen the notebook and **Run all** again — Drive artifacts let it resume quickly.
+- The last cell zips the GGUF + adapter to `/content/tmc-llm-download.zip`.
 
 ### 4. Use the model locally (Ollama)
 
-After the notebook finishes, download **`MyDrive/tmc-llm/models/gguf/tmc-lm-tinyllama-q4_k_m.gguf`**
-and place it in `models/gguf/`, then import it into Ollama:
+1. In Colab, open the file browser (folder icon) → navigate to `/content/` → right-click
+   **`tmc-llm-download.zip`** → **Download** (or download just
+   `/content/tmc-llm-artifacts/models/gguf/tmc-lm-tinyllama-q4_k_m.gguf`).
+2. Extract the zip and place the GGUF in `models/gguf/`, then import it into Ollama:
 
 ```powershell
 .\scripts\create_ollama_model.ps1
 ollama run tmc-lm
 ```
+
+> Free Colab sessions are wiped after disconnecting. Download the zip before closing the
+> notebook — the next session re-clones the repo and re-trains from scratch.
 
 > The `scripts/*.sh` files (`prepare_dataset.sh`, `train_lora.sh`, `merge_lora.sh`,
 > `convert_to_gguf.sh`) are the Linux/Colab equivalents of the `.ps1` scripts and are what
