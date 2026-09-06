@@ -258,9 +258,16 @@ git add -A && git commit -m "Add Colab support" && git push
 - Artifacts are written to the VM at `/content/tmc-llm-artifacts/` (`models/adapters`,
   `models/merged`, `models/gguf`) plus a Hugging Face cache in `.hf-cache/`.
 - Typical free-T4 runtime: ~20–40 minutes (model download, training, merge, GGUF build).
-- The last cell verifies the GGUF + adapter actually exist (no more empty downloads), then zips
-  to `/content/tmc-llm-download.zip` and, when Drive is mounted, copies it to
-  `MyDrive/tmc-llm/`.
+- Every pipeline stage (dataset → train → merge → convert) is **self-verifying**: each cell
+  checks its output and aborts loudly with a listing + log tail if anything is missing, so a
+  mid-run failure is caught immediately instead of silently producing an empty download.
+- Cell **2b** (Resume from Drive) copies the adapter / GGUF back from `MyDrive/tmc-llm/artifacts/`
+  if the VM was reset, so completed work is never re-trained. Adapters are mirrored to Drive
+  right after training and the GGUF right after conversion (incremental checkpoints).
+- The last cell verifies the GGUF + adapter actually exist (no more empty downloads), falls back
+  to the Drive copy if the VM is empty, then zips to `/content/tmc-llm-download.zip` and, when
+  Drive is mounted, copies everything to `MyDrive/tmc-llm/`.
+- Stage results are tracked in `/content/tmc-llm-artifacts/pipeline-status.json`.
 
 ### 4. Use the model locally (Ollama)
 
