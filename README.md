@@ -230,6 +230,49 @@ Expected behavior:
 
 ---
 
+## Google Colab Quick Start (Recommended)
+
+Train without installing anything locally. The included notebook runs the whole pipeline
+(dataset → LoRA fine-tune → merge → GGUF) on Colab's free T4 GPU and saves every artifact
+to your Google Drive.
+
+### 1. Push the repo to GitHub
+
+```bash
+git add -A && git commit -m "Add Colab support" && git push
+```
+
+### 2. Open the notebook in Colab
+
+- Go to https://colab.research.google.com → **File → Open notebook → GitHub** → `McEmil1993/tmc-llm` → open `notebooks/tmc_llm_colab.ipynb`
+- **Runtime → Change runtime type → Hardware accelerator = T4 GPU** → Save
+
+### 3. Run everything
+
+- Click **Run all**. On the first run, allow the Google Drive access popup when prompted.
+- The notebook mounts `MyDrive/tmc-llm/` and persists:
+  - `.hf-cache/` — Hugging Face model cache (no re-download between sessions)
+  - `data/raw/tmc_sources/` — place new source documents here for future training runs
+  - `models/adapters/`, `models/merged/`, `models/gguf/` — training outputs
+- Typical free-T4 runtime: ~20–40 minutes (model download, training, merge, GGUF build).
+- If the session disconnects, reopen the notebook and **Run all** again — Drive artifacts let it resume quickly.
+
+### 4. Use the model locally (Ollama)
+
+After the notebook finishes, download **`MyDrive/tmc-llm/models/gguf/tmc-lm-tinyllama-q4_k_m.gguf`**
+and place it in `models/gguf/`, then import it into Ollama:
+
+```powershell
+.\scripts\create_ollama_model.ps1
+ollama run tmc-lm
+```
+
+> The `scripts/*.sh` files (`prepare_dataset.sh`, `train_lora.sh`, `merge_lora.sh`,
+> `convert_to_gguf.sh`) are the Linux/Colab equivalents of the `.ps1` scripts and are what
+> the notebook drives. `convert_to_gguf.sh` builds llama.cpp directly (no Docker required).
+
+---
+
 ## Docker Setup (Full Pipeline)
 
 ### Dockerfile for Training + Conversion
@@ -371,12 +414,18 @@ tmc-llm/
     merged/               # Merged model output
     gguf/                 # GGUF quantized models
   external/
-    llama.cpp/            # Cloned llama.cpp (inside Docker only)
+    llama.cpp/            # Cloned llama.cpp (Docker / Colab build)
+  notebooks/
+    tmc_llm_colab.ipynb   # Google Colab training notebook
   scripts/
-    prepare_dataset.ps1   # Build dataset from source documents
-    train_lora.ps1        # Fine-tune with LoRA
-    merge_lora.ps1        # Merge LoRA into base model
-    check_gguf.ps1        # Validate GGUF file
+    prepare_dataset.ps1   # Build dataset from source documents (Windows)
+    train_lora.ps1        # Fine-tune with LoRA (Windows)
+    merge_lora.ps1        # Merge LoRA into base model (Windows)
+    check_gguf.ps1        # Validate GGUF file (Windows)
+    prepare_dataset.sh    # Linux/Colab equivalent
+    train_lora.sh         # Linux/Colab equivalent
+    merge_lora.sh         # Linux/Colab equivalent
+    convert_to_gguf.sh    # GGUF conversion (Linux/Colab, no Docker)
   src/
     tmc_llm/              # Python package
   tests/
